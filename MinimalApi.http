@@ -1,0 +1,37 @@
+@MinimalApi_HostAddress = http://localhost:5266
+
+GET {{MinimalApi_HostAddress}}/dragoes
+Accept: application/json
+
+###
+
+GET {{MinimalApi_HostAddress}}/dragoes/1
+Accept: application/json
+
+###
+
+POST {{MinimalApi_HostAddress}}/dragoes
+Content-Type: application/json
+
+{
+  "nome": "Toothless",
+  "cor": "Preto",
+  "elemento": "Raio",
+  "idade": 8
+}
+
+###
+
+PUT {{MinimalApi_HostAddress}}/dragoes/2
+Content-Type: application/json
+
+{
+  "nome": "Drogon",
+  "cor": "Preto e vermelho",
+  "elemento": "Fogo",
+  "idade": 13
+}
+
+###
+
+DELETE {{MinimalApi_HostAddress}}/dragoes/3
