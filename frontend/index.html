@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz dos Dragoes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="auth-panel dragon-panel" id="auth-panel">
+            <div class="panel-crest" aria-hidden="true"></div>
+            <p class="eyebrow">Cronicas Draconicas</p>
+            <h1>Entre na arena dos dragoes</h1>
+            <p class="panel-lead">Descubra o nome de cada criatura pelas imagens da API, some pontos e dispute o topo do ranking global.</p>
+
+            <div class="segmented-control" role="tablist" aria-label="Acesso">
+                <button class="segment active" id="login-tab" type="button">Login</button>
+                <button class="segment" id="register-tab" type="button">Cadastro</button>
+            </div>
+
+            <form id="login-form" class="stack-form">
+                <div>
+                    <label class="field-label" for="login-user">Login</label>
+                    <input id="login-user" class="text-input" type="text" autocomplete="username" required>
+                </div>
+                <div>
+                    <label class="field-label" for="login-password">Senha</label>
+                    <input id="login-password" class="text-input" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="primary-button" type="submit">Entrar</button>
+            </form>
+
+            <form id="register-form" class="stack-form hidden">
+                <div>
+                    <label class="field-label" for="register-name">Nome</label>
+                    <input id="register-name" class="text-input" type="text" autocomplete="name" required>
+                </div>
+                <div>
+                    <label class="field-label" for="register-login">Login</label>
+                    <input id="register-login" class="text-input" type="text" autocomplete="username" required>
+                </div>
+                <div>
+                    <label class="field-label" for="register-password">Senha</label>
+                    <input id="register-password" class="text-input" type="password" autocomplete="new-password" minlength="6" required>
+                </div>
+                <button class="primary-button" type="submit">Cadastrar e jogar</button>
+            </form>
+
+            <p class="status-message" id="auth-status" role="status"></p>
+        </section>
+
+        <section class="quiz-layout hidden" id="quiz-layout">
+            <section class="quiz-panel dragon-panel">
+                <header class="panel-header">
+                    <div>
+                        <div class="title-row">
+                            <span class="panel-crest small" aria-hidden="true"></span>
+                            <p class="eyebrow">Desafio visual</p>
+                        </div>
+                        <h2>Qual e o nome desta besta ancestral?</h2>
+                    </div>
+                    <div class="timer-badge">
+                        <span>Tempo</span>
+                        <strong id="timer-display">0.0s</strong>
+                    </div>
+                </header>
+
+                <div class="dragon-frame">
+                    <span class="frame-rune top-left" aria-hidden="true"></span>
+                    <span class="frame-rune top-right" aria-hidden="true"></span>
+                    <span class="frame-rune bottom-left" aria-hidden="true"></span>
+                    <span class="frame-rune bottom-right" aria-hidden="true"></span>
+                    <img id="dragon-image" class="hidden" alt="Imagem do dragao do quiz">
+                    <div class="empty-state" id="image-empty">
+                        <strong>Carregue um dragao para acender a arena.</strong>
+                    </div>
+                </div>
+
+                <form id="answer-form" class="answer-form">
+                    <label class="field-label" for="answer-input">Nome do dragao</label>
+                    <div class="answer-row">
+                        <input id="answer-input" class="text-input" type="text" placeholder="Digite sua resposta" autocomplete="off" required>
+                        <button class="primary-button compact-button" type="submit">Responder</button>
+                    </div>
+                </form>
+
+                <p class="feedback-card" id="feedback-message" role="status"></p>
+
+                <div class="actions-row">
+                    <button class="secondary-button" id="next-question" type="button">Proximo dragao</button>
+                    <button class="secondary-button" id="refresh-ranking" type="button">Atualizar ranking</button>
+                </div>
+            </section>
+
+            <aside class="side-panel">
+                <section class="summary-card dragon-panel">
+                    <p class="eyebrow">Jogador</p>
+                    <h3 id="active-user-name"></h3>
+                    <p id="active-user-score"></p>
+                    <button class="secondary-button" id="logout-button" type="button">Sair</button>
+                </section>
+
+                <section class="summary-card dragon-panel">
+                    <div class="ranking-heading">
+                        <div>
+                            <p class="eyebrow">Ranking global</p>
+                            <h3>Trono de escamas</h3>
+                        </div>
+                    </div>
+                    <ol class="ranking-list" id="ranking-list"></ol>
+                    <p class="status-message" id="ranking-status" role="status"></p>
+                </section>
+            </aside>
+        </section>
+    </main>
+
+    <script src="./app.js"></script>
+</body>
+</html>

@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.FileProviders;
 using MinimalApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,10 +12,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(origin =>
-            Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
-            (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-             uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)))
+        policy.AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -43,8 +42,33 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+
+forwardedHeadersOptions.KnownIPNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 app.UseCors("FrontendPolicy");
 app.UseHttpsRedirection();
+
+var frontendPath = Path.Combine(builder.Environment.ContentRootPath, "frontend");
+if (Directory.Exists(frontendPath))
+{
+    var frontendFiles = new PhysicalFileProvider(frontendPath);
+
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = frontendFiles
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = frontendFiles
+    });
+}
 
 app.MapControllers();
 

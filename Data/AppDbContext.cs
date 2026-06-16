@@ -23,6 +23,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .Property(x => x.Login)
             .HasMaxLength(80);
 
+        modelBuilder.Entity<Usuario>()
+            .Property(x => x.SenhaHash)
+            .HasMaxLength(256);
+
+        modelBuilder.Entity<Usuario>()
+            .Property(x => x.SenhaSalt)
+            .HasMaxLength(64);
+
         modelBuilder.Entity<Dragao>()
             .Property(x => x.Nome)
             .HasMaxLength(120);

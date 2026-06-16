@@ -124,6 +124,16 @@ namespace MinimalApi.Migrations
                     b.Property<int>("PontuacaoTotal")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SenhaHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("SenhaSalt")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
                     b.Property<int>("TotalAcertos")
                         .HasColumnType("integer");
 

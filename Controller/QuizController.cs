@@ -104,8 +104,8 @@ public class QuizController(AppDbContext dbContext) : ControllerBase
                     ? 0
                     : x.Tentativas.Average(t => t.TempoRespostaSegundos)
             })
-            .OrderByDescending(x => x.TotalAcertos)
-            .ThenByDescending(x => x.PontuacaoTotal)
+            .OrderByDescending(x => x.PontuacaoTotal)
+            .ThenByDescending(x => x.TotalAcertos)
             .ThenBy(x => x.TempoMedioResposta)
             .ToListAsync();
 
