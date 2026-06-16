@@ -1,7 +1,7 @@
 namespace MinimalApi.Models;
 
-public class DragaoRequest
+public class UsuarioRequest
 {
     public string Nome { get; set; } = string.Empty;
-    public string ImagemUrl { get; set; } = string.Empty;
+    public string Login { get; set; } = string.Empty;
 }

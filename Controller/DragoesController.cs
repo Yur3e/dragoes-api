@@ -1,68 +1,82 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MinimalApi.Data;
 using MinimalApi.Models;
-using MinimalApi.Service;
 
 namespace MinimalApi.Controller;
 
 [ApiController]
 [Route("dragoes")]
-public class DragoesController : ControllerBase
+public class DragoesController(AppDbContext dbContext) : ControllerBase
 {
-    private readonly DragaoService _dragaoService;
-
-    public DragoesController(DragaoService dragaoService)
-    {
-        _dragaoService = dragaoService;
-    }
-
     [HttpGet]
-    public IActionResult Listar()
+    public async Task<IActionResult> Listar()
     {
-        return Ok(_dragaoService.Listar());
+        var dragoes = await dbContext.Dragoes
+            .OrderBy(x => x.Id)
+            .ToListAsync();
+
+        return Ok(dragoes);
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult BuscarPorId(int id)
+    public async Task<IActionResult> BuscarPorId(int id)
     {
-        var dragao = _dragaoService.BuscarPorId(id);
+        var dragao = await dbContext.Dragoes.FindAsync(id);
 
         if (dragao is null)
         {
-            return NotFound("Dragão não encontrado.");
+            return NotFound("Dragao nao encontrado.");
         }
 
         return Ok(dragao);
     }
 
     [HttpPost]
-    public IActionResult Criar([FromBody] DragaoRequest novoDragao)
+    public async Task<IActionResult> Criar([FromBody] DragaoRequest novoDragao)
     {
-        var dragao = _dragaoService.Criar(novoDragao);
+        var dragao = new Dragao
+        {
+            Nome = novoDragao.Nome.Trim(),
+            ImagemUrl = novoDragao.ImagemUrl.Trim()
+        };
+
+        dbContext.Dragoes.Add(dragao);
+        await dbContext.SaveChangesAsync();
+
         return CreatedAtAction(nameof(BuscarPorId), new { id = dragao.Id }, dragao);
     }
 
     [HttpPut("{id:int}")]
-    public IActionResult Atualizar(int id, [FromBody] DragaoRequest dragaoAtualizado)
+    public async Task<IActionResult> Atualizar(int id, [FromBody] DragaoRequest dragaoAtualizado)
     {
-        var dragao = _dragaoService.Atualizar(id, dragaoAtualizado);
+        var dragao = await dbContext.Dragoes.FindAsync(id);
 
         if (dragao is null)
         {
-            return NotFound("Dragão não encontrado.");
+            return NotFound("Dragao nao encontrado.");
         }
+
+        dragao.Nome = dragaoAtualizado.Nome.Trim();
+        dragao.ImagemUrl = dragaoAtualizado.ImagemUrl.Trim();
+
+        await dbContext.SaveChangesAsync();
 
         return Ok(dragao);
     }
 
     [HttpDelete("{id:int}")]
-    public IActionResult Remover(int id)
+    public async Task<IActionResult> Remover(int id)
     {
-        var removido = _dragaoService.Remover(id);
+        var dragao = await dbContext.Dragoes.FindAsync(id);
 
-        if (!removido)
+        if (dragao is null)
         {
-            return NotFound("Dragão não encontrado.");
+            return NotFound("Dragao nao encontrado.");
         }
+
+        dbContext.Dragoes.Remove(dragao);
+        await dbContext.SaveChangesAsync();
 
         return NoContent();
     }

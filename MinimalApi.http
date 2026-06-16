@@ -1,11 +1,21 @@
 @MinimalApi_HostAddress = http://localhost:5266
 
-GET {{MinimalApi_HostAddress}}/dragoes
+POST {{MinimalApi_HostAddress}}/usuarios
+Content-Type: application/json
+
+{
+  "nome": "Jose",
+  "login": "jose"
+}
+
+###
+
+GET {{MinimalApi_HostAddress}}/usuarios
 Accept: application/json
 
 ###
 
-GET {{MinimalApi_HostAddress}}/dragoes/1
+GET {{MinimalApi_HostAddress}}/dragoes
 Accept: application/json
 
 ###
@@ -15,23 +25,27 @@ Content-Type: application/json
 
 {
   "nome": "Toothless",
-  "cor": "Preto",
-  "elemento": "Raio",
-  "idade": 8
+  "imagemUrl": "https://placehold.co/600x400?text=Toothless"
 }
 
 ###
 
-PUT {{MinimalApi_HostAddress}}/dragoes/2
+GET {{MinimalApi_HostAddress}}/quiz/pergunta
+Accept: application/json
+
+###
+
+POST {{MinimalApi_HostAddress}}/quiz/responder
 Content-Type: application/json
 
 {
-  "nome": "Drogon",
-  "cor": "Preto e vermelho",
-  "elemento": "Fogo",
-  "idade": 13
+  "usuarioId": 1,
+  "dragaoId": 1,
+  "respostaInformada": "Smaug",
+  "tempoRespostaSegundos": 4
 }
 
 ###
 
-DELETE {{MinimalApi_HostAddress}}/dragoes/3
+GET {{MinimalApi_HostAddress}}/quiz/ranking
+Accept: application/json
