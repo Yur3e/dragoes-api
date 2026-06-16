@@ -10,6 +10,10 @@ RUN dotnet publish "MinimalApi.csproj" -c Release -o /app/publish /p:UseAppHost=
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV ASPNETCORE_URLS=http://0.0.0.0:10000
 EXPOSE 10000
 

@@ -18,10 +18,16 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection nao foi configurada. Defina a environment variable ConnectionStrings__DefaultConnection no ambiente remoto.");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Host=localhost;Port=5432;Database=minimalapi;Username=postgres;Password=postgres"));
+    options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 
