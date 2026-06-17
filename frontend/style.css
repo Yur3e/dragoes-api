@@ -126,6 +126,10 @@ button {
     animation: rise-in 500ms ease;
 }
 
+.auth-panel .segmented-control {
+    margin-top: 18px;
+}
+
 .panel-crest {
     width: 72px;
     height: 72px;

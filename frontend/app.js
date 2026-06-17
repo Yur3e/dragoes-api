@@ -27,6 +27,7 @@ const elements = {
     authStatus: document.getElementById("auth-status"),
     dragonImage: document.getElementById("dragon-image"),
     imageEmpty: document.getElementById("image-empty"),
+    promptText: document.getElementById("prompt-text"),
     answerForm: document.getElementById("answer-form"),
     answerInput: document.getElementById("answer-input"),
     feedbackMessage: document.getElementById("feedback-message"),
@@ -158,24 +159,26 @@ async function fetchNextQuestion() {
     }
 
     try {
-        setFeedback("Carregando proximo dragao...", "");
-        const question = await apiRequest("/quiz/pergunta");
+        setFeedback("Carregando próximo dragão...", "");
+        const question = await apiRequest(`/quiz/pergunta?usuarioId=${state.activeUser.id}`);
         state.currentQuestion = question;
 
-        elements.dragonImage.src = question.imagemUrl;
+        elements.dragonImage.src = resolveApiUrl(question.imagemUrl);
         elements.dragonImage.classList.remove("hidden");
         elements.imageEmpty.classList.add("hidden");
         elements.answerInput.value = "";
         elements.answerInput.disabled = false;
         elements.answerInput.focus();
+        elements.promptText.textContent = question.pergunta || "Qual é o nome deste dragão?";
 
-        setFeedback("Olhe a imagem e digite o nome do dragao.", "");
+        setFeedback("Olhe a imagem e digite o nome do dragão.", "");
         startTimer();
     } catch (error) {
         state.currentQuestion = null;
         elements.dragonImage.removeAttribute("src");
         elements.dragonImage.classList.add("hidden");
         elements.imageEmpty.classList.remove("hidden");
+        elements.promptText.textContent = "Qual é o nome deste dragão?";
         setFeedback(error.message, "error");
         stopTimer();
     }
@@ -185,18 +188,18 @@ async function handleAnswer(event) {
     event.preventDefault();
 
     if (!state.activeUser) {
-        setFeedback("Faca login para responder.", "error");
+        setFeedback("Faça login para responder.", "error");
         return;
     }
 
     if (!state.currentQuestion) {
-        setFeedback("Carregue um dragao antes de responder.", "error");
+        setFeedback("Carregue um dragão antes de responder.", "error");
         return;
     }
 
     const respostaInformada = elements.answerInput.value.trim();
     if (!respostaInformada) {
-        setFeedback("Digite o nome do dragao.", "error");
+        setFeedback("Digite o nome do dragão.", "error");
         return;
     }
 
@@ -227,7 +230,7 @@ async function handleAnswer(event) {
 
         const message = result.acertou
             ? `Acertou! +${result.pontosGanhos} pontos em ${tempoRespostaSegundos}s.`
-            : `Errou. Voce respondeu em ${tempoRespostaSegundos}s e nao pontuou.`;
+            : result.mensagem || `Errou. Você respondeu em ${tempoRespostaSegundos}s e não pontuou.`;
 
         setFeedback(message, result.acertou ? "success" : "error");
         refreshRanking();
@@ -254,7 +257,7 @@ function renderRanking(ranking) {
         return;
     }
 
-    setRankingStatus("", "");
+    setRankingStatus("Desempate por acertos e, depois, por tempo médio de resposta.", "");
     ranking.forEach((item, index) => {
         const entry = document.createElement("li");
         entry.className = "ranking-item";
@@ -308,7 +311,7 @@ function getElapsedSeconds() {
 async function apiRequest(path, options = {}) {
     const baseUrl = sanitizeApiBaseUrl(state.apiBaseUrl);
     if (!baseUrl) {
-        throw new Error("URL da API nao configurada.");
+        throw new Error("URL da API não configurada.");
     }
 
     let response;
@@ -316,7 +319,7 @@ async function apiRequest(path, options = {}) {
     try {
         response = await fetch(`${baseUrl}${path}`, options);
     } catch {
-        throw new Error("Falha de rede ao acessar a API. Verifique se a API do Render esta no ar e se o CORS foi liberado.");
+        throw new Error("Falha de rede ao acessar a API. Verifique se a API do Render está no ar e se o CORS foi liberado.");
     }
 
     const text = await response.text();
@@ -366,6 +369,18 @@ function setStatus(element, message, type) {
 
 function sanitizeApiBaseUrl(url) {
     return (url || "").trim().replace(/\/+$/, "");
+}
+
+function resolveApiUrl(path) {
+    if (!path) {
+        return "";
+    }
+
+    if (/^https?:\/\//i.test(path) || path.startsWith("data:")) {
+        return path;
+    }
+
+    return `${sanitizeApiBaseUrl(state.apiBaseUrl)}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function safeParse(value) {

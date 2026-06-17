@@ -9,29 +9,54 @@ namespace MinimalApi.Controller;
 
 [ApiController]
 [Route("quiz")]
-public class QuizController(AppDbContext dbContext) : ControllerBase
+public class QuizController(AppDbContext dbContext, IConfiguration configuration) : ControllerBase
 {
+    private const string AdminApiKeyHeader = "X-Admin-Api-Key";
+
     [HttpGet("pergunta")]
-    public async Task<IActionResult> ObterPergunta()
+    public async Task<IActionResult> ObterPergunta([FromQuery] int? usuarioId)
     {
-        var totalDragoes = await dbContext.Dragoes.CountAsync();
+        var dragoesQuery = dbContext.Dragoes.AsQueryable();
+
+        if (usuarioId.HasValue)
+        {
+            var usuarioExiste = await dbContext.Usuarios.AnyAsync(x => x.Id == usuarioId.Value);
+            if (!usuarioExiste)
+            {
+                return NotFound("Usuário não encontrado.");
+            }
+
+            var dragoesJaPontuados = await dbContext.QuizTentativas
+                .Where(x => x.UsuarioId == usuarioId.Value && x.Acertou)
+                .Select(x => x.DragaoId)
+                .Distinct()
+                .ToListAsync();
+
+            dragoesQuery = dragoesQuery.Where(x => !dragoesJaPontuados.Contains(x.Id));
+        }
+
+        var totalDragoes = await dragoesQuery.CountAsync();
         if (totalDragoes == 0)
         {
-            return NotFound("Nenhum dragao cadastrado para o quiz.");
+            return NotFound(usuarioId.HasValue
+                ? "Você já pontuou em todos os dragões cadastrados."
+                : "Nenhum dragão cadastrado para o quiz.");
         }
 
         var indice = Random.Shared.Next(totalDragoes);
-        var dragao = await dbContext.Dragoes
+        var pergunta = await dragoesQuery
             .OrderBy(x => x.Id)
             .Skip(indice)
             .Select(x => new
             {
                 x.Id,
-                x.ImagemUrl
+                x.Nome,
+                ImagemUrl = $"/dragoes/{x.Id}/imagem",
+                Pergunta = "Qual é o nome deste dragão?"
             })
             .FirstAsync();
 
-        return Ok(dragao);
+        return Ok(pergunta);
     }
 
     [HttpPost("responder")]
@@ -40,18 +65,26 @@ public class QuizController(AppDbContext dbContext) : ControllerBase
         var usuario = await dbContext.Usuarios.FindAsync(request.UsuarioId);
         if (usuario is null)
         {
-            return NotFound("Usuario nao encontrado.");
+            return NotFound("Usuário não encontrado.");
         }
 
         var dragao = await dbContext.Dragoes.FindAsync(request.DragaoId);
         if (dragao is null)
         {
-            return NotFound("Dragao nao encontrado.");
+            return NotFound("Dragão não encontrado.");
         }
 
         if (request.TempoRespostaSegundos < 0)
         {
-            return BadRequest("O tempo de resposta nao pode ser negativo.");
+            return BadRequest("O tempo de resposta não pode ser negativo.");
+        }
+
+        var jaPontuouNesseDragao = await dbContext.QuizTentativas
+            .AnyAsync(x => x.UsuarioId == request.UsuarioId && x.DragaoId == request.DragaoId && x.Acertou);
+
+        if (jaPontuouNesseDragao)
+        {
+            return Conflict("Você já pontuou nesse dragão.");
         }
 
         var acertou = NormalizarTexto(request.RespostaInformada) == NormalizarTexto(dragao.Nome);
@@ -85,14 +118,54 @@ public class QuizController(AppDbContext dbContext) : ControllerBase
             tentativa.Acertou,
             tentativa.PontosGanhos,
             usuario.TotalAcertos,
-            usuario.PontuacaoTotal
+            usuario.PontuacaoTotal,
+            Mensagem = acertou
+                ? "Resposta correta."
+                : $"Resposta incorreta. O nome certo era {dragao.Nome}."
         });
     }
 
     [HttpGet("ranking")]
     public async Task<IActionResult> RankingGlobal()
     {
-        var ranking = await dbContext.Usuarios
+        var ranking = await ConsultarRankingAsync();
+        return Ok(ranking);
+    }
+
+    [HttpPut("ranking/recalcular")]
+    public async Task<IActionResult> RecalcularRanking()
+    {
+        var unauthorizedResult = ValidarAdminApiKey();
+        if (unauthorizedResult is not null)
+        {
+            return unauthorizedResult;
+        }
+
+        var usuarios = await dbContext.Usuarios
+            .Include(x => x.Tentativas)
+            .ToListAsync();
+
+        foreach (var usuario in usuarios)
+        {
+            usuario.TotalAcertos = usuario.Tentativas.Count(x => x.Acertou);
+            usuario.PontuacaoTotal = usuario.Tentativas.Sum(x => x.PontosGanhos);
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        var ranking = await ConsultarRankingAsync();
+
+        return Ok(new
+        {
+            Mensagem = "Ranking recalculado com sucesso.",
+            TotalUsuariosAtualizados = usuarios.Count,
+            Ranking = ranking
+        });
+    }
+
+    private async Task<List<object>> ConsultarRankingAsync()
+    {
+        return await dbContext.Usuarios
             .Select(x => new
             {
                 x.Id,
@@ -107,9 +180,37 @@ public class QuizController(AppDbContext dbContext) : ControllerBase
             .OrderByDescending(x => x.PontuacaoTotal)
             .ThenByDescending(x => x.TotalAcertos)
             .ThenBy(x => x.TempoMedioResposta)
+            .Select(x => (object)new
+            {
+                x.Id,
+                x.Nome,
+                x.Login,
+                x.TotalAcertos,
+                x.PontuacaoTotal,
+                x.TempoMedioResposta
+            })
             .ToListAsync();
+    }
 
-        return Ok(ranking);
+    private IActionResult? ValidarAdminApiKey()
+    {
+        var configuredApiKey = configuration["Admin:ApiKey"]?.Trim();
+        if (string.IsNullOrWhiteSpace(configuredApiKey))
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "Chave administrativa não configurada.");
+        }
+
+        if (!Request.Headers.TryGetValue(AdminApiKeyHeader, out var providedApiKey))
+        {
+            return Unauthorized("Chave administrativa não informada.");
+        }
+
+        if (!string.Equals(providedApiKey.ToString(), configuredApiKey, StringComparison.Ordinal))
+        {
+            return Unauthorized("Chave administrativa inválida.");
+        }
+
+        return null;
     }
 
     private static int CalcularPontos(bool acertou, int tempoRespostaSegundos)

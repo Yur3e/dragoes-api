@@ -17,6 +17,12 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
     {
         var dragoes = await dbContext.Dragoes
             .OrderBy(x => x.Id)
+            .Select(x => new
+            {
+                x.Id,
+                x.Nome,
+                ImagemUrl = "/dragoes/" + x.Id + "/imagem"
+            })
             .ToListAsync();
 
         return Ok(dragoes);
@@ -29,10 +35,51 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
 
         if (dragao is null)
         {
-            return NotFound("Dragao nao encontrado.");
+            return NotFound("Dragão não encontrado.");
         }
 
-        return Ok(dragao);
+        return Ok(ToDragaoResponse(dragao));
+    }
+
+    [HttpGet("{id:int}/imagem")]
+    public async Task<IActionResult> ObterImagem(int id)
+    {
+        var dragao = await dbContext.Dragoes.FindAsync(id);
+        if (dragao is null)
+        {
+            return NotFound("Dragão não encontrado.");
+        }
+
+        var imagemUrl = dragao.ImagemUrl?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(imagemUrl))
+        {
+            return NotFound("Imagem do dragão não encontrada.");
+        }
+
+        if (imagemUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            var separatorIndex = imagemUrl.IndexOf(',');
+            if (separatorIndex < 0)
+            {
+                return BadRequest("Imagem do dragão em formato inválido.");
+            }
+
+            var metadata = imagemUrl[..separatorIndex];
+            var base64 = imagemUrl[(separatorIndex + 1)..];
+            var mediaType = metadata.Split(';')[0].Replace("data:", "", StringComparison.OrdinalIgnoreCase);
+
+            try
+            {
+                var bytes = Convert.FromBase64String(base64);
+                return File(bytes, string.IsNullOrWhiteSpace(mediaType) ? "application/octet-stream" : mediaType);
+            }
+            catch (FormatException)
+            {
+                return BadRequest("Imagem do dragão em formato inválido.");
+            }
+        }
+
+        return Redirect(imagemUrl);
     }
 
     [HttpPost]
@@ -53,7 +100,7 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
         dbContext.Dragoes.Add(dragao);
         await dbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(BuscarPorId), new { id = dragao.Id }, dragao);
+        return CreatedAtAction(nameof(BuscarPorId), new { id = dragao.Id }, ToDragaoResponse(dragao));
     }
 
     [HttpPut("{id:int}")]
@@ -69,7 +116,7 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
 
         if (dragao is null)
         {
-            return NotFound("Dragao nao encontrado.");
+            return NotFound("Dragão não encontrado.");
         }
 
         dragao.Nome = dragaoAtualizado.Nome.Trim();
@@ -77,7 +124,7 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
 
         await dbContext.SaveChangesAsync();
 
-        return Ok(dragao);
+        return Ok(ToDragaoResponse(dragao));
     }
 
     [HttpDelete("{id:int}")]
@@ -93,7 +140,7 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
 
         if (dragao is null)
         {
-            return NotFound("Dragao nao encontrado.");
+            return NotFound("Dragão não encontrado.");
         }
 
         dbContext.Dragoes.Remove(dragao);
@@ -107,19 +154,29 @@ public class DragoesController(AppDbContext dbContext, IConfiguration configurat
         var configuredApiKey = configuration["Admin:ApiKey"]?.Trim();
         if (string.IsNullOrWhiteSpace(configuredApiKey))
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, "Chave administrativa nao configurada.");
+            return StatusCode(StatusCodes.Status500InternalServerError, "Chave administrativa não configurada.");
         }
 
         if (!Request.Headers.TryGetValue(AdminApiKeyHeader, out var providedApiKey))
         {
-            return Unauthorized("Chave administrativa nao informada.");
+            return Unauthorized("Chave administrativa não informada.");
         }
 
         if (!string.Equals(providedApiKey.ToString(), configuredApiKey, StringComparison.Ordinal))
         {
-            return Unauthorized("Chave administrativa invalida.");
+            return Unauthorized("Chave administrativa inválida.");
         }
 
         return null;
+    }
+
+    private static object ToDragaoResponse(Dragao dragao)
+    {
+        return new
+        {
+            dragao.Id,
+            dragao.Nome,
+            ImagemUrl = $"/dragoes/{dragao.Id}/imagem"
+        };
     }
 }

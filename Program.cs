@@ -10,14 +10,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("AdminApiKey", new OpenApiSecurityScheme
-    {
-        Description = "Informe a chave administrativa no header X-Admin-Api-Key.",
-        Name = "X-Admin-Api-Key",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey
-    });
-
     options.OperationFilter<DragoesAdminOperationFilter>();
 });
 builder.Services.AddCors(options =>
@@ -34,7 +26,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
-        "ConnectionStrings:DefaultConnection nao foi configurada. Defina a environment variable ConnectionStrings__DefaultConnection no ambiente remoto.");
+        "ConnectionStrings:DefaultConnection não foi configurada. Defina a variável de ambiente ConnectionStrings__DefaultConnection no ambiente remoto.");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz dos Dragoes</title>
+    <title>Quiz dos Dragões</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,9 +13,6 @@
     <main class="app-shell">
         <section class="auth-panel dragon-panel" id="auth-panel">
             <div class="panel-crest" aria-hidden="true"></div>
-            <p class="eyebrow">Cronicas Draconicas</p>
-            <h1>Entre na arena dos dragoes</h1>
-            <p class="panel-lead">Descubra o nome de cada criatura pelas imagens da API, some pontos e dispute o topo do ranking global.</p>
 
             <div class="segmented-control" role="tablist" aria-label="Acesso">
                 <button class="segment active" id="login-tab" type="button">Login</button>
@@ -61,7 +58,7 @@
                             <span class="panel-crest small" aria-hidden="true"></span>
                             <p class="eyebrow">Desafio visual</p>
                         </div>
-                        <h2>Qual e o nome desta besta ancestral?</h2>
+                        <h2 id="prompt-text">Qual é o nome deste dragão?</h2>
                     </div>
                     <div class="timer-badge">
                         <span>Tempo</span>
@@ -74,14 +71,14 @@
                     <span class="frame-rune top-right" aria-hidden="true"></span>
                     <span class="frame-rune bottom-left" aria-hidden="true"></span>
                     <span class="frame-rune bottom-right" aria-hidden="true"></span>
-                    <img id="dragon-image" class="hidden" alt="Imagem do dragao do quiz">
+                    <img id="dragon-image" class="hidden" alt="Imagem do dragão do quiz">
                     <div class="empty-state" id="image-empty">
-                        <strong>Carregue um dragao para acender a arena.</strong>
+                        <strong>Carregue um dragão para acender a arena.</strong>
                     </div>
                 </div>
 
                 <form id="answer-form" class="answer-form">
-                    <label class="field-label" for="answer-input">Nome do dragao</label>
+                    <label class="field-label" for="answer-input">Nome do dragão</label>
                     <div class="answer-row">
                         <input id="answer-input" class="text-input" type="text" placeholder="Digite sua resposta" autocomplete="off" required>
                         <button class="primary-button compact-button" type="submit">Responder</button>
@@ -91,7 +88,7 @@
                 <p class="feedback-card" id="feedback-message" role="status"></p>
 
                 <div class="actions-row">
-                    <button class="secondary-button" id="next-question" type="button">Proximo dragao</button>
+                    <button class="secondary-button" id="next-question" type="button">Próximo dragão</button>
                     <button class="secondary-button" id="refresh-ranking" type="button">Atualizar ranking</button>
                 </div>
             </section>

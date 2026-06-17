@@ -7,24 +7,35 @@ public class DragoesAdminOperationFilter : IOperationFilter
     {
         var actionDescriptor = context.ApiDescription.ActionDescriptor;
         var controllerName = actionDescriptor.RouteValues["controller"];
-
-        if (!string.Equals(controllerName, "Dragoes", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
         var httpMethod = context.ApiDescription.HttpMethod;
-        if (httpMethod is not ("POST" or "PUT" or "DELETE"))
+
+        var isAdminDragaoEndpoint =
+            string.Equals(controllerName, "Dragoes", StringComparison.OrdinalIgnoreCase) &&
+            httpMethod is "POST" or "PUT" or "DELETE";
+
+        var isAdminUsuarioEndpoint =
+            string.Equals(controllerName, "Usuarios", StringComparison.OrdinalIgnoreCase) &&
+            httpMethod is "PUT" or "DELETE";
+
+        var isAdminQuizEndpoint =
+            string.Equals(controllerName, "Quiz", StringComparison.OrdinalIgnoreCase) &&
+            httpMethod is "PUT";
+
+        if (!isAdminDragaoEndpoint && !isAdminUsuarioEndpoint && !isAdminQuizEndpoint)
         {
             return;
         }
 
-        operation.Security ??= [];
-        operation.Security.Add(new OpenApiSecurityRequirement
+        operation.Parameters ??= [];
+        if (!operation.Parameters.Any(x => string.Equals(x.Name, "X-Admin-Api-Key", StringComparison.OrdinalIgnoreCase)))
         {
-            [
-                new OpenApiSecuritySchemeReference("AdminApiKey", null, null)
-            ] = []
-        });
+            operation.Parameters.Add(new OpenApiParameter
+            {
+                Name = "X-Admin-Api-Key",
+                In = ParameterLocation.Header,
+                Required = true,
+                Description = "Chave administrativa para operações protegidas."
+            });
+        }
     }
 }
