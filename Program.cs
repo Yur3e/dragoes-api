@@ -2,12 +2,24 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using MinimalApi.Data;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("AdminApiKey", new OpenApiSecurityScheme
+    {
+        Description = "Informe a chave administrativa no header X-Admin-Api-Key.",
+        Name = "X-Admin-Api-Key",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey
+    });
+
+    options.OperationFilter<DragoesAdminOperationFilter>();
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
